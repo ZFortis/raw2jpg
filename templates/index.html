@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAW 转 JPG</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 560px;
+            padding: 24px;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #94a3b8;
+            font-size: 14px;
+            margin-bottom: 32px;
+        }
+
+        .drop-zone {
+            border: 2px dashed #334155;
+            border-radius: 12px;
+            padding: 48px 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+            background: #1e293b;
+        }
+
+        .drop-zone:hover,
+        .drop-zone.dragover {
+            border-color: #3b82f6;
+            background: #1e293b;
+        }
+
+        .drop-zone .icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .drop-zone p {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        .drop-zone .formats {
+            color: #64748b;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+
+        #file-input { display: none; }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: #fff;
+            margin-top: 16px;
+        }
+
+        .btn-primary:hover { background: #2563eb; }
+        .btn-primary:disabled {
+            background: #475569;
+            cursor: not-allowed;
+        }
+
+        .btn-download {
+            background: #22c55e;
+            color: #fff;
+            width: 100%;
+            margin-top: 16px;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        .btn-download:hover { background: #16a34a; }
+
+        .result {
+            margin-top: 24px;
+            display: none;
+        }
+
+        .result.show { display: block; }
+
+        .status {
+            text-align: center;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .status.loading {
+            background: #1e3a5f;
+            color: #93c5fd;
+        }
+
+        .status.error {
+            background: #450a0a;
+            color: #fca5a5;
+        }
+
+        .preview-img {
+            width: 100%;
+            border-radius: 8px;
+            margin-top: 16px;
+            display: none;
+        }
+
+        /* File list */
+        .file-list {
+            margin-top: 16px;
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #1e293b;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 13px;
+            gap: 12px;
+        }
+
+        .file-item .file-item-name {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: #e2e8f0;
+            min-width: 0;
+        }
+
+        .file-item .file-item-status {
+            flex-shrink: 0;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .file-item-status.waiting { color: #fbbf24; }
+        .file-item-status.processing { color: #93c5fd; }
+        .file-item-status.done { color: #22c55e; }
+        .file-item-status.error { color: #f87171; }
+
+        .file-item .file-item-download {
+            flex-shrink: 0;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            color: #fff;
+            background: #3b82f6;
+            transition: background 0.2s;
+        }
+        .file-item .file-item-download:hover { background: #2563eb; }
+        .file-item .file-item-download:disabled {
+            background: #475569;
+            cursor: not-allowed;
+        }
+
+        .file-item .file-item-size {
+            flex-shrink: 0;
+            font-size: 11px;
+            color: #64748b;
+        }
+
+        /* Batch toolbar */
+        .batch-toolbar {
+            margin-top: 16px;
+            text-align: center;
+            display: none;
+        }
+
+        .btn-zip {
+            background: #8b5cf6;
+            color: #fff;
+            padding: 10px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            text-decoration: none;
+        }
+        .btn-zip:hover { background: #7c3aed; }
+        .btn-zip:disabled {
+            background: #475569;
+            cursor: not-allowed;
+        }
+
+        .batch-summary {
+            text-align: center;
+            font-size: 13px;
+            color: #94a3b8;
+            margin-top: 16px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>RAW → JPG</h1>
+        <p class="subtitle">从 RAW 文件中提取嵌入的 JPG 预览图，支持批量处理</p>
+
+        <div class="drop-zone" id="drop-zone">
+            <div class="icon">📷</div>
+            <p>拖拽 RAW 文件到此处，或点击选择</p>
+            <p class="formats">支持 CR2 / NEF / ARW / DNG / RAF / ORF 等格式</p>
+        </div>
+        <input type="file" id="file-input" accept=".cr2,.nef,.arw,.dng,.raf,.orf,.rw2,.pef,.srw,.3fr,.raw" multiple>
+
+        <div class="file-list" id="file-list"></div>
+        <div class="batch-summary" id="batch-summary"></div>
+
+        <button class="btn btn-primary" id="extract-btn" disabled>提取 JPG</button>
+
+        <div class="batch-toolbar" id="batch-toolbar">
+            <a class="btn btn-zip" id="zip-btn" style="display:none">下载全部 ZIP</a>
+        </div>
+
+        <div class="result" id="result">
+            <div class="status loading" id="status" style="display:none"></div>
+            <img class="preview-img" id="preview" alt="Preview">
+            <a class="btn btn-download" id="download-btn" style="display:none" download>下载 JPG</a>
+        </div>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById("drop-zone");
+        const fileInput = document.getElementById("file-input");
+        const fileList = document.getElementById("file-list");
+        const batchSummary = document.getElementById("batch-summary");
+        const extractBtn = document.getElementById("extract-btn");
+        const batchToolbar = document.getElementById("batch-toolbar");
+        const zipBtn = document.getElementById("zip-btn");
+        const result = document.getElementById("result");
+        const status = document.getElementById("status");
+        const preview = document.getElementById("preview");
+        const downloadBtn = document.getElementById("download-btn");
+
+        let selectedFiles = [];
+        let batchId = null;
+
+        dropZone.addEventListener("click", () => fileInput.click());
+
+        dropZone.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            dropZone.classList.add("dragover");
+        });
+
+        dropZone.addEventListener("dragleave", () => {
+            dropZone.classList.remove("dragover");
+        });
+
+        dropZone.addEventListener("drop", (e) => {
+            e.preventDefault();
+            dropZone.classList.remove("dragover");
+            handleFiles(e.dataTransfer.files);
+        });
+
+        fileInput.addEventListener("change", () => {
+            handleFiles(fileInput.files);
+        });
+
+        function handleFiles(files) {
+            if (!files || files.length === 0) return;
+            selectedFiles = Array.from(files);
+            batchId = null;
+
+            if (selectedFiles.length === 1) {
+                extractBtn.textContent = "提取 JPG";
+            } else {
+                extractBtn.textContent = "批量提取 JPG (" + selectedFiles.length + " 个文件)";
+            }
+            extractBtn.disabled = false;
+
+            renderFileList();
+            resetResult();
+            resetBatchUI();
+        }
+
+        function renderFileList() {
+            fileList.innerHTML = "";
+            fileList.style.display = "flex";
+
+            selectedFiles.forEach((file, idx) => {
+                const item = document.createElement("div");
+                item.className = "file-item";
+                item.id = "file-item-" + idx;
+
+                const sizeText = formatSize(file.size);
+
+                item.innerHTML =
+                    '<span class="file-item-name">' + escapeHtml(file.name) + '</span>' +
+                    '<span class="file-item-size">' + sizeText + '</span>' +
+                    '<span class="file-item-status waiting">待处理</span>' +
+                    '<a class="file-item-download" style="display:none">下载</a>';
+
+                fileList.appendChild(item);
+            });
+        }
+
+        function resetResult() {
+            result.classList.remove("show");
+            status.style.display = "none";
+            status.className = "status";
+            preview.style.display = "none";
+            downloadBtn.style.display = "none";
+        }
+
+        function resetBatchUI() {
+            batchToolbar.style.display = "none";
+            zipBtn.style.display = "none";
+            batchSummary.style.display = "none";
+        }
+
+        extractBtn.addEventListener("click", async () => {
+            if (selectedFiles.length === 0) return;
+
+            resetResult();
+            resetBatchUI();
+
+            // Reset all file item statuses
+            for (let i = 0; i < selectedFiles.length; i++) {
+                const item = document.getElementById("file-item-" + i);
+                if (!item) continue;
+                const s = item.querySelector(".file-item-status");
+                s.className = "file-item-status processing";
+                s.textContent = "提取中...";
+                const dl = item.querySelector(".file-item-download");
+                dl.style.display = "none";
+            }
+
+            extractBtn.disabled = true;
+            extractBtn.textContent = "提取中...";
+
+            try {
+                if (selectedFiles.length === 1) {
+                    await extractSingle();
+                } else {
+                    await extractBatch();
+                }
+            } catch (err) {
+                for (let i = 0; i < selectedFiles.length; i++) {
+                    const item = document.getElementById("file-item-" + i);
+                    if (!item) continue;
+                    const s = item.querySelector(".file-item-status");
+                    s.className = "file-item-status error";
+                    s.textContent = err.message;
+                }
+            } finally {
+                extractBtn.disabled = false;
+                if (selectedFiles.length === 1) {
+                    extractBtn.textContent = "提取 JPG";
+                } else {
+                    extractBtn.textContent = "批量提取 JPG";
+                }
+            }
+        });
+
+        async function extractSingle() {
+            const formData = new FormData();
+            formData.append("file", selectedFiles[0]);
+
+            result.classList.add("show");
+            preview.style.display = "none";
+            downloadBtn.style.display = "none";
+
+            status.style.display = "block";
+            status.className = "status loading";
+            status.textContent = "正在提取 JPG...";
+
+            const resp = await fetch("/extract", { method: "POST", body: formData });
+
+            if (!resp.ok) {
+                const err = await resp.json();
+                throw new Error(err.error || "提取失败");
+            }
+
+            const blob = await resp.blob();
+            const url = URL.createObjectURL(blob);
+
+            preview.src = url;
+            preview.style.display = "block";
+            downloadBtn.href = url;
+            downloadBtn.style.display = "block";
+            downloadBtn.download = selectedFiles[0].name.replace(/\.[^.]+$/, "") + ".jpg";
+
+            status.style.display = "none";
+
+            // Update file list item
+            const item = document.getElementById("file-item-0");
+            if (item) {
+                const s = item.querySelector(".file-item-status");
+                s.className = "file-item-status done";
+                s.textContent = "完成";
+                const dl = item.querySelector(".file-item-download");
+                dl.style.display = "inline";
+                dl.href = url;
+                dl.download = selectedFiles[0].name.replace(/\.[^.]+$/, "") + ".jpg";
+            }
+        }
+
+        async function extractBatch() {
+            const formData = new FormData();
+            for (const file of selectedFiles) {
+                formData.append("files", file);
+            }
+
+            const resp = await fetch("/batch/extract", { method: "POST", body: formData });
+
+            if (!resp.ok) {
+                const err = await resp.json();
+                throw new Error(err.error || "批量处理失败");
+            }
+
+            const data = await resp.json();
+            batchId = data.batch_id;
+
+            let successCount = 0;
+            for (const fr of data.files) {
+                const idx = parseInt(fr.id, 10);
+                const item = document.getElementById("file-item-" + idx);
+                if (!item) continue;
+
+                const s = item.querySelector(".file-item-status");
+                const dl = item.querySelector(".file-item-download");
+
+                if (fr.status === "success") {
+                    s.className = "file-item-status done";
+                    s.textContent = "完成";
+                    dl.style.display = "inline";
+                    dl.href = "/batch/" + batchId + "/download/" + fr.id + "?name=" + encodeURIComponent(fr.output_name);
+                    dl.download = fr.output_name || "output.jpg";
+                    successCount++;
+                } else {
+                    s.className = "file-item-status error";
+                    s.textContent = fr.error || "失败";
+                    dl.style.display = "none";
+                }
+            }
+
+            // Show batch summary
+            batchSummary.style.display = "block";
+            batchSummary.textContent =
+                "共 " + data.total_count + " 个文件，" +
+                successCount + " 个成功，" +
+                data.error_count + " 个失败";
+
+            // Show ZIP button if 2+ files succeeded
+            if (successCount >= 2) {
+                batchToolbar.style.display = "block";
+                zipBtn.style.display = "inline-block";
+                zipBtn.href = "/batch/" + batchId + "/zip";
+            }
+        }
+
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + " B";
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+            return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement("div");
+            div.textContent = str;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
