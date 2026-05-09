@@ -5,22 +5,97 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RAW 转 JPG</title>
     <style>
+        :root {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --text-dim: #64748b;
+            --border: #334155;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --success: #22c55e;
+            --success-hover: #16a34a;
+            --zip: #8b5cf6;
+            --zip-hover: #7c3aed;
+            --disabled: #475569;
+            --loading-bg: #1e3a5f;
+            --loading-text: #93c5fd;
+            --error-bg: #450a0a;
+            --error-text: #fca5a5;
+            --status-waiting: #fbbf24;
+            --status-processing: #93c5fd;
+            --status-done: #22c55e;
+            --status-error: #f87171;
+            --btn-text: #fff;
+        }
+
+        :root[data-theme="light"] {
+            --bg: #FFF6DE;
+            --surface: #FFFFFF;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --text-dim: #94a3b8;
+            --border: #8BDFDD;
+            --accent: #8BDFDD;
+            --accent-hover: #6cc7c3;
+            --success: #F48F68;
+            --success-hover: #e07a54;
+            --zip: #FFE394;
+            --zip-hover: #f0d272;
+            --disabled: #cbd5e1;
+            --loading-bg: #e0f7f7;
+            --loading-text: #3a8f8b;
+            --error-bg: #fee2e2;
+            --error-text: #dc2626;
+            --status-waiting: #d97706;
+            --status-processing: #3a8f8b;
+            --status-done: #F48F68;
+            --status-error: #dc2626;
+            --btn-text: #1e293b;
+        }
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: #0f172a;
-            color: #e2e8f0;
+            background: var(--bg);
+            color: var(--text);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: background 0.3s, color 0.3s;
         }
 
         .container {
             width: 100%;
             max-width: 560px;
             padding: 24px;
+            position: relative;
+        }
+
+        /* Theme toggle */
+        .theme-toggle {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 20px;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s, border-color 0.2s;
+            z-index: 10;
+        }
+        .theme-toggle:hover {
+            border-color: var(--accent);
         }
 
         h1 {
@@ -32,25 +107,24 @@
 
         .subtitle {
             text-align: center;
-            color: #94a3b8;
+            color: var(--text-muted);
             font-size: 14px;
             margin-bottom: 32px;
         }
 
         .drop-zone {
-            border: 2px dashed #334155;
+            border: 2px dashed var(--border);
             border-radius: 12px;
             padding: 48px 24px;
             text-align: center;
             cursor: pointer;
             transition: border-color 0.2s, background 0.2s;
-            background: #1e293b;
+            background: var(--surface);
         }
 
         .drop-zone:hover,
         .drop-zone.dragover {
-            border-color: #3b82f6;
-            background: #1e293b;
+            border-color: var(--accent);
         }
 
         .drop-zone .icon {
@@ -59,12 +133,12 @@
         }
 
         .drop-zone p {
-            color: #94a3b8;
+            color: var(--text-muted);
             font-size: 14px;
         }
 
         .drop-zone .formats {
-            color: #64748b;
+            color: var(--text-dim);
             font-size: 12px;
             margin-top: 8px;
         }
@@ -83,27 +157,28 @@
         }
 
         .btn-primary {
-            background: #3b82f6;
-            color: #fff;
+            background: var(--accent);
+            color: var(--btn-text);
             margin-top: 16px;
         }
 
-        .btn-primary:hover { background: #2563eb; }
+        .btn-primary:hover { background: var(--accent-hover); }
         .btn-primary:disabled {
-            background: #475569;
+            background: var(--disabled);
+            color: var(--text-muted);
             cursor: not-allowed;
         }
 
         .btn-download {
-            background: #22c55e;
-            color: #fff;
+            background: var(--success);
+            color: var(--btn-text);
             width: 100%;
             margin-top: 16px;
             text-align: center;
             text-decoration: none;
         }
 
-        .btn-download:hover { background: #16a34a; }
+        .btn-download:hover { background: var(--success-hover); }
 
         .result {
             margin-top: 24px;
@@ -120,13 +195,13 @@
         }
 
         .status.loading {
-            background: #1e3a5f;
-            color: #93c5fd;
+            background: var(--loading-bg);
+            color: var(--loading-text);
         }
 
         .status.error {
-            background: #450a0a;
-            color: #fca5a5;
+            background: var(--error-bg);
+            color: var(--error-text);
         }
 
         .preview-img {
@@ -148,7 +223,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            background: #1e293b;
+            background: var(--surface);
             border-radius: 8px;
             padding: 10px 14px;
             font-size: 13px;
@@ -160,7 +235,7 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            color: #e2e8f0;
+            color: var(--text);
             min-width: 0;
         }
 
@@ -170,10 +245,10 @@
             white-space: nowrap;
         }
 
-        .file-item-status.waiting { color: #fbbf24; }
-        .file-item-status.processing { color: #93c5fd; }
-        .file-item-status.done { color: #22c55e; }
-        .file-item-status.error { color: #f87171; }
+        .file-item-status.waiting { color: var(--status-waiting); }
+        .file-item-status.processing { color: var(--status-processing); }
+        .file-item-status.done { color: var(--status-done); }
+        .file-item-status.error { color: var(--status-error); }
 
         .file-item .file-item-download {
             flex-shrink: 0;
@@ -182,20 +257,20 @@
             font-size: 12px;
             font-weight: 600;
             text-decoration: none;
-            color: #fff;
-            background: #3b82f6;
+            color: var(--btn-text);
+            background: var(--accent);
             transition: background 0.2s;
         }
-        .file-item .file-item-download:hover { background: #2563eb; }
+        .file-item .file-item-download:hover { background: var(--accent-hover); }
         .file-item .file-item-download:disabled {
-            background: #475569;
+            background: var(--disabled);
             cursor: not-allowed;
         }
 
         .file-item .file-item-size {
             flex-shrink: 0;
             font-size: 11px;
-            color: #64748b;
+            color: var(--text-dim);
         }
 
         /* Batch toolbar */
@@ -206,8 +281,8 @@
         }
 
         .btn-zip {
-            background: #8b5cf6;
-            color: #fff;
+            background: var(--zip);
+            color: var(--btn-text);
             padding: 10px 24px;
             border: none;
             border-radius: 8px;
@@ -217,16 +292,16 @@
             transition: background 0.2s;
             text-decoration: none;
         }
-        .btn-zip:hover { background: #7c3aed; }
+        .btn-zip:hover { background: var(--zip-hover); }
         .btn-zip:disabled {
-            background: #475569;
+            background: var(--disabled);
             cursor: not-allowed;
         }
 
         .batch-summary {
             text-align: center;
             font-size: 13px;
-            color: #94a3b8;
+            color: var(--text-muted);
             margin-top: 16px;
             display: none;
         }
@@ -234,6 +309,8 @@
 </head>
 <body>
     <div class="container">
+        <button class="theme-toggle" id="theme-toggle" title="切换深浅模式">🌙</button>
+
         <h1>RAW → JPG</h1>
         <p class="subtitle">从 RAW 文件中提取嵌入的 JPG 预览图，支持批量处理</p>
 
@@ -261,6 +338,7 @@
     </div>
 
     <script>
+        const themeToggle = document.getElementById("theme-toggle");
         const dropZone = document.getElementById("drop-zone");
         const fileInput = document.getElementById("file-input");
         const fileList = document.getElementById("file-list");
@@ -275,6 +353,24 @@
 
         let selectedFiles = [];
         let batchId = null;
+
+        // Theme
+        function getTheme() {
+            return localStorage.getItem("theme") || "dark";
+        }
+
+        function applyTheme(theme) {
+            document.documentElement.dataset.theme = theme;
+            themeToggle.textContent = theme === "light" ? "☀️" : "🌙";
+            localStorage.setItem("theme", theme);
+        }
+
+        applyTheme(getTheme());
+
+        themeToggle.addEventListener("click", () => {
+            const next = getTheme() === "light" ? "dark" : "light";
+            applyTheme(next);
+        });
 
         dropZone.addEventListener("click", () => fileInput.click());
 
@@ -355,7 +451,6 @@
             resetResult();
             resetBatchUI();
 
-            // Reset all file item statuses
             for (let i = 0; i < selectedFiles.length; i++) {
                 const item = document.getElementById("file-item-" + i);
                 if (!item) continue;
@@ -423,7 +518,6 @@
 
             status.style.display = "none";
 
-            // Update file list item
             const item = document.getElementById("file-item-0");
             if (item) {
                 const s = item.querySelector(".file-item-status");
@@ -475,14 +569,12 @@
                 }
             }
 
-            // Show batch summary
             batchSummary.style.display = "block";
             batchSummary.textContent =
                 "共 " + data.total_count + " 个文件，" +
                 successCount + " 个成功，" +
                 data.error_count + " 个失败";
 
-            // Show ZIP button if 2+ files succeeded
             if (successCount >= 2) {
                 batchToolbar.style.display = "block";
                 zipBtn.style.display = "inline-block";
